@@ -26,6 +26,7 @@ function potx_drush_command() {
       'folder' => 'Folder to begin translation extraction in. When no other option is set this defaults to current directory.',
       'api' => 'Drupal core version to use for extraction settings.',
       'language' => 'language to include in the po file',
+      'destination' => 'The file name of the exported file.',
     ),
     'examples' => array(
       'potx single' => 'Extract translatable strings from applicable files in current directory and write to single output file',
