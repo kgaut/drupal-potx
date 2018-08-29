@@ -97,6 +97,8 @@ function potx_drush_extract($mode = NULL) {
     $folder_option = drush_get_option('folder');
     $api_option = drush_get_option('api');
     $language_option = drush_get_option('language');
+    $destination = drush_get_option('destination');
+
     if (empty($api_option) || !in_array($api_option, [5, 6, 7, 8])) {
       $api_option = POTX_API_CURRENT;
     }
@@ -128,14 +130,14 @@ function potx_drush_extract($mode = NULL) {
     potx_finish_processing('_potx_save_string', $api_option);
 
     _potx_build_files(
-      POTX_STRING_RUNTIME,
-      $build_mode,
-      'general',
-      '_potx_save_string',
-      '_potx_save_version',
-      '_potx_get_header',
-      $language_option,
-      $language_option
+        POTX_STRING_RUNTIME,
+        $build_mode,
+        $destination,
+        '_potx_save_string',
+        '_potx_save_version',
+        '_potx_get_header',
+        $language_option,
+        $language_option
     );
     _potx_build_files(POTX_STRING_INSTALLER, POTX_BUILD_SINGLE, 'installer');
     _potx_write_files();
