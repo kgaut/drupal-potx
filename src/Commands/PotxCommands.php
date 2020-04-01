@@ -127,7 +127,8 @@ class PotxCommands extends DrushCommands
             '_potx_save_version',
             '_potx_get_header',
             $language_option,
-            $language_option
+            $language_option,
+            $api_option
         );
         _potx_build_files(POTX_STRING_INSTALLER, POTX_BUILD_SINGLE, 'installer');
         _potx_write_files();
