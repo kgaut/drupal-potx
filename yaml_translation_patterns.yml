@@ -1,30 +1,11 @@
 translation_patterns:
-  - matches: '*.info.yml'
+  - matches: '*.yml'
     translatable_keys:
       - name
       - description
       - package
       - regions
-  - matches: '*.routing.yml'
-    translatable_keys:
-      - key: _title
-        context: _title_context
-  - matches: '*.links.*.yml'
-    translatable_keys:
-      - key: title
-        context: title_context
-  - matches: '*.links.menu.yml'
-    translatable_keys:
-      - description
-  - matches: '*.breakpoints.yml'
-    translatable_keys:
       - label
       - group
-  - matches: '*.permissions.yml'
-    top_level_translatables: true
-    translatable_keys:
-      - title
-      - description
-  - matches: 'config/schema/*.yml'
-    translatable_keys:
-      - label
+      - key: _title
+        context: _title_context

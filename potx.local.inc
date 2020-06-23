@@ -6,7 +6,7 @@ use Symfony\Component\Yaml\Exception\ParseException;
 /**
  * Initialize potx to run locally, e.g. by drush.
  *
- * @param string $module_path
+ * @param string|array $module_path
  *   Path to the module that is being parsed by potx.
  */
 function potx_local_init($module_path = NULL) {
@@ -30,7 +30,12 @@ function potx_local_init($module_path = NULL) {
   );
 
   if ($module_path !== NULL) {
-    _potx_find_all_modules($module_path);
+    if (is_string($module_path)) {
+      $module_path = [$module_path];
+    }
+    foreach ($module_path as $path) {
+      _potx_find_all_modules($path);
+    }
   }
 }
 

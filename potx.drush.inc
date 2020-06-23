@@ -100,7 +100,10 @@ function potx_drush_extract($mode = NULL) {
       $api_option = POTX_API_CURRENT;
     }
 
-    potx_local_init($folder_option);
+    if (!empty($folder_option)) {
+      $folders = explode(',', $folder_option);
+    }
+    potx_local_init($folders);
 
     if (!empty($modules_option)) {
       $modules = explode(',', $modules_option);
@@ -111,8 +114,10 @@ function potx_drush_extract($mode = NULL) {
     elseif (!empty($files_option)) {
       $files = explode(',', $files_option);
     }
-    elseif (!empty($folder_option)) {
-      $files = _potx_explore_dir($folder_option, '*', $api_option, TRUE);
+    elseif ($folders) {
+      foreach ($folders as $folder) {
+        $files = array_merge($files, _potx_explore_dir($folder, '*', $api_option, TRUE));
+      }
     }
     else {
       // No file list provided so autodiscover files in current directory.
