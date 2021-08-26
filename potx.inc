@@ -29,6 +29,7 @@ spl_autoload_register(function($c){
   @include preg_replace('#\\\|_(?!.*\\\)#','/',$c).'.php';
 });
 
+use Drupal\Component\Gettext\PoItem;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
 
@@ -514,8 +515,12 @@ function _potx_build_files($string_mode = POTX_STRING_RUNTIME, $build_mode = POT
         if (!empty($context)) {
           $output .= "msgctxt \"$context\"\n";
         }
-        $output .= "msgid \"$singular\"\n";
-        $output .= "msgid_plural \"$plural\"\n";
+        // If this class exists, the msgid header part will be outputted by the
+        // item class iteself.
+        if (!class_exists('Drupal\Component\Gettext\PoItem')) {
+          $output .= "msgid \"$singular\"\n";
+          $output .= "msgid_plural \"$plural\"\n";
+        }
         if (isset($translation_export_langcode)) {
           if (!empty($context) && $core_version_major >= 7) {
             $output .= _potx_translation_export($translation_export_langcode, $singular, $plural, $api_version, $context);
@@ -591,15 +596,18 @@ function _potx_translation_export($translation_export_langcode, $string, $plural
 
   // Column and table name changed between versions.
   $language_column = $api_version > POTX_API_5 ? 'language' : 'locale';
-  $language_table  = $api_version > POTX_API_5 ? 'languages' : 'locales_meta';
+  /** @var \Drupal\Core\Database\Connection $database */
+  $database = \Drupal::service('database');
+  /** @var \Drupal\locale\PluralFormulaInterface $plural_formula */
+  $plural_formula = \Drupal::service('locale.plural.formula');
 
   if (!isset($plural)) {
     // Single string to look translation up for.
     if (!empty($context)) {
-      $translation = db_query("SELECT t.translation FROM {locales_source} s LEFT JOIN {locales_target} t ON t.lid = s.lid WHERE s.source = :source AND t.{$language_column} = :langcode AND context = :context", array(':source' => $string, ':langcode' => $translation_export_langcode, ':context' => $context))->fetchField();
+      $translation = $database->query("SELECT t.translation FROM {locales_source} s LEFT JOIN {locales_target} t ON t.lid = s.lid WHERE s.source = :source AND t.{$language_column} = :langcode AND context = :context", array(':source' => $string, ':langcode' => $translation_export_langcode, ':context' => $context))->fetchField();
     }
     else {
-      $translation = db_query("SELECT t.translation FROM {locales_source} s LEFT JOIN {locales_target} t ON t.lid = s.lid WHERE s.source = :source AND t.{$language_column} = :langcode", array(':source' => $string, ':langcode' => $translation_export_langcode))->fetchField();
+      $translation = $database->query("SELECT t.translation FROM {locales_source} s LEFT JOIN {locales_target} t ON t.lid = s.lid WHERE s.source = :source AND t.{$language_column} = :langcode", array(':source' => $string, ':langcode' => $translation_export_langcode))->fetchField();
     }
     if ($translation) {
       return 'msgstr '. _locale_export_string($translation);
@@ -611,9 +619,7 @@ function _potx_translation_export($translation_export_langcode, $string, $plural
     // String with plural variants. Fill up source string array first.
     $plural = stripcslashes($plural);
     $strings = array();
-    $number_of_plurals = db_table_exists('{'. $language_table . '}') ?
-      db_query('SELECT plurals FROM {'. $language_table ."} WHERE {$language_column} = :langcode", array(':langcode' => $translation_export_langcode))->fetchField() :
-      0;
+    $number_of_plurals = $plural_formula->getNumberOfPlurals($translation_export_langcode);
     $plural_index = 0;
     while ($plural_index < $number_of_plurals) {
       if ($plural_index == 0) {
@@ -635,13 +641,11 @@ function _potx_translation_export($translation_export_langcode, $string, $plural
     $output = '';
     if (count($strings)) {
       // Source string array was done, so export translations.
-      foreach ($strings as $index => $string) {
-        if ($translation = db_query("SELECT t.translation FROM {locales_source} s LEFT JOIN {locales_target} t ON t.lid = s.lid WHERE s.source = :source AND t.{$language_column} = :langcode", array(':source' => $string, ':langcode' => $translation_export_langcode))->fetchField()) {
-          $output .= 'msgstr['. $index .'] '. _locale_export_string(_locale_export_remove_plural($translation));
-        }
-        else {
-          $output .= "msgstr[". $index ."] \"\"\n";
-        }
+      $combined_string = implode($strings, PoItem::DELIMITER);
+      if ($values = $database->query("SELECT t.*,s.* FROM {locales_source} s LEFT JOIN {locales_target} t ON t.lid = s.lid WHERE s.source = :source AND t.{$language_column} = :langcode", array(':source' => $combined_string, ':langcode' => $translation_export_langcode))->fetchAssoc()) {
+        $po_item = new PoItem();
+        $po_item->setFromArray($values);
+        $output .= (string) $po_item;
       }
     }
     else {
