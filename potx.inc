@@ -692,9 +692,6 @@ function _potx_get_header($file, $template_export_langcode = NULL, $api_version 
   if (isset($language->formula) && isset($language->plurals)) {
     $output .= "\"Plural-Forms: nplurals=". $language->plurals ."; plural=". strtr($language->formula, array('$' => '')) .";\\n\"\n\n";
   }
-  else {
-    $output .= "\"Plural-Forms: nplurals=INTEGER; plural=EXPRESSION;\\n\"\n\n";
-  }
   return $output;
 }
 
