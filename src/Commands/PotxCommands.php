@@ -30,6 +30,7 @@ class PotxCommands extends DrushCommands
      *   option is set this defaults to current directory.
      * @option api Drupal core version to use for extraction settings.
      * @option language Language to include in the po file
+     * @option destination The file name of the exported file.
      *
      * @usage potx single
      *   Extract translatable strings from applicable files in current
@@ -52,6 +53,7 @@ class PotxCommands extends DrushCommands
             'folder' => null,
             'api' => null,
             'language' => null,
+            'destination' => 'general',
           ]
     ) {
         // Include library.
@@ -75,6 +77,7 @@ class PotxCommands extends DrushCommands
         $folder_option = $options['folder'];
         $api_option = $options['api'];
         $language_option = $options['language'];
+        $destination = $options['destination'];
         if (empty($api_option) || !in_array($api_option, [5, 6, 7, 8])) {
             $api_option = POTX_API_CURRENT;
         }
@@ -122,7 +125,7 @@ class PotxCommands extends DrushCommands
         _potx_build_files(
             POTX_STRING_RUNTIME,
             $build_mode,
-            'general',
+            $destination,
             '_potx_save_string',
             '_potx_save_version',
             '_potx_get_header',
