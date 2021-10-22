@@ -30,8 +30,10 @@ spl_autoload_register(function($c){
 });
 
 use Drupal\Component\Gettext\PoItem;
+use Drupal\Core\Template\Loader\FilesystemLoader;
 use Symfony\Component\Yaml\Yaml;
 use Symfony\Component\Yaml\Exception\ParseException;
+use Twig\Source;
 
 /**
  * The current Drupal major API verion.
@@ -1798,10 +1800,30 @@ function _potx_parse_js_string($string) {
  * Parse a Twig template for translatables. Drupal 8+.
  */
 function _potx_parse_twig_file($code, $file, $save_callback) {
-  $twig_lexer = new Twig_Lexer(new Twig_Environment());
+  $is_twig_1 = TRUE;
+  $twig_lexer = NULL;
+  try {
+    $twig_lexer = new Twig_Lexer(new Twig_Environment());
+  }
+  catch (ArgumentCountError $e) {
+    // Probably means we need to use the syntax for twig 2.
+    $is_twig_1 = FALSE;
+  }
+  if (!$twig_lexer) {
+    $module_handler = \Drupal::moduleHandler();
+    $theme_handler = \Drupal::service('theme_handler');
+    $loader = new FilesystemLoader($file, $module_handler, $theme_handler);
+    $twig_lexer = new Twig_Lexer(new Twig_Environment($loader));
+  }
 
   try {
-    $stream = $twig_lexer->tokenize($code, $file);
+    if ($is_twig_1) {
+      $stream = $twig_lexer->tokenize($code, $file);
+    }
+    else {
+      $source = new Source($code, $file);
+      $stream = $twig_lexer->tokenize($source);
+    }
   } catch(Twig_Error_Syntax $e) {
     potx_status('error', t("Twig parsing error on file @path: @error", array(
         '@path' => $file,
