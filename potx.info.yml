@@ -1,6 +1,7 @@
 name: Translation template extractor
 description: Provides a web interface and an API to extract translatable text from the sources of installed components.
 core: 8.x
+core_version_requirement: ^8 || ^9
 package: Multilingual
 version: 8.x-1.x-dev
 dependencies:
